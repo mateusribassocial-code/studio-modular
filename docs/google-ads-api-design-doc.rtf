@@ -1,0 +1,67 @@
+{\rtf1\ansi\deff0
+{\fonttbl{\f0 Arial;}}
+{\colortbl;\red0\green0\blue0;}
+\f0\fs24
+
+\b\fs32 Dashboard de Performance — Design Document\b0\fs24
+\par\par
+
+\b 1. Overview\b0
+\par
+This document describes the design and intended use of a private performance dashboard built by Mateus Ribas Marketing. The tool integrates Google Ads data with other advertising platforms (Meta Ads) and CRM data to provide a unified view of campaign performance for real estate clients.
+\par\par
+
+\b 2. Purpose\b0
+\par
+The dashboard is a private, password-protected internal tool used exclusively by Mateus Ribas Marketing and its clients to monitor advertising performance. It is not a public product and will not be distributed or commercialized.
+\par\par
+
+\b 3. Google Ads API Usage\b0
+\par
+The application uses the Google Ads API in read-only mode to retrieve:
+\par\par
+- Campaign names and statuses\par
+- Impressions, clicks, and cost metrics\par
+- Conversion data\par
+- CTR (Click-Through Rate)\par
+\par
+The data is fetched via the \b googleAds:search\b0  endpoint using GAQL queries. No campaigns are created, modified, or deleted through the API.
+\par\par
+
+\b 4. Architecture\b0
+\par
+- \b Frontend:\b0  Next.js web application hosted on Vercel\par
+- \b Backend:\b0  Next.js API routes that proxy requests to the Google Ads API\par
+- \b Authentication:\b0  OAuth2 with refresh token (per-account)\par
+- \b Access control:\b0  Password-protected dashboard per client\par
+\par\par
+
+\b 5. Data Flow\b0
+\par
+1. User logs in with client password\par
+2. Dashboard requests metrics from internal API routes\par
+3. API routes authenticate with Google Ads API via OAuth2\par
+4. Campaign data is returned and displayed in the dashboard\par
+5. No data is stored permanently — all data is fetched on demand\par
+\par\par
+
+\b 6. Accounts Accessed\b0
+\par
+The tool accesses fewer than 10 Google Ads accounts, all managed by Mateus Ribas Marketing on behalf of real estate clients in Brazil. Access is limited to accounts where explicit permission has been granted by the account owner.
+\par\par
+
+\b 7. Compliance\b0
+\par
+- Data is used solely for performance monitoring and optimization\par
+- No data is shared with third parties\par
+- No automated bidding or campaign changes are made via the API\par
+- The tool complies with Google Ads API Terms of Service\par
+\par\par
+
+\b 8. Developer Contact\b0
+\par
+Name: Mateus Ribas\par
+Email: mateusribas.social@gmail.com\par
+Company: Mateus Ribas Marketing\par
+Country: Brazil\par
+}
