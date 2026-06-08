@@ -4,7 +4,7 @@ import { FILIAIS } from '@/lib/types'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const filialId = searchParams.get('filial') ?? 'florianopolis'
+  const filialId = searchParams.get('filial') ?? 'geral'
   const dateFrom = searchParams.get('from') ?? getDefaultFrom()
   const dateTo = searchParams.get('to') ?? getDefaultTo()
 
