@@ -41,11 +41,11 @@ export interface CrmLead {
 
 export interface CrmFunnel {
   total: number
-  contacted: number
-  scheduled: number
-  visited: number
-  negotiating: number
-  closed: number
+  tentativaContato: number
+  leadQualificada: number
+  orcamento: number
+  proposta: number
+  comprou: number
 }
 
 export interface Ga4Data {

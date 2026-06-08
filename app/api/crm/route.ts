@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fetchC2SFunnel, fetchC2SLeads, fetchC2SSellerStats } from '@/lib/crm'
+import { fetchTintimFunnel, fetchTintimSellerStats } from '@/lib/crm'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const dateFrom = searchParams.get('from') ?? getDefaultFrom()
   const dateTo = searchParams.get('to') ?? getDefaultTo()
-  const filial = searchParams.get('filial') ?? undefined
 
-  const [funnel, leads, sellers] = await Promise.all([
-    fetchC2SFunnel(dateFrom, dateTo, filial),
-    fetchC2SLeads(dateFrom, dateTo, filial),
-    fetchC2SSellerStats(dateFrom, dateTo, filial),
+  const [funnel, sellers] = await Promise.all([
+    fetchTintimFunnel(dateFrom, dateTo),
+    fetchTintimSellerStats(dateFrom, dateTo),
   ])
 
-  return NextResponse.json({ funnel, leads, sellers })
+  return NextResponse.json({ funnel, sellers })
 }
 
 function getDefaultFrom() {
