@@ -8,12 +8,12 @@ interface FunnelChartProps {
 }
 
 const stages = [
-  { key: 'total', label: 'Total Leads', color: 'bg-blue-600' },
-  { key: 'contacted', label: 'Contactados', color: 'bg-blue-500' },
-  { key: 'scheduled', label: 'Agendados', color: 'bg-indigo-500' },
-  { key: 'visited', label: 'Visitaram', color: 'bg-violet-500' },
-  { key: 'negotiating', label: 'Em negociação', color: 'bg-purple-500' },
-  { key: 'closed', label: 'Fechados', color: 'bg-emerald-500' },
+  { key: 'total',            label: 'Total Leads',       color: 'bg-blue-600' },
+  { key: 'tentativaContato', label: 'Tent. Contato',     color: 'bg-indigo-500' },
+  { key: 'leadQualificada',  label: 'Lead Qualificada',  color: 'bg-violet-500' },
+  { key: 'orcamento',        label: 'Orçamento',         color: 'bg-purple-500' },
+  { key: 'proposta',         label: 'Proposta',          color: 'bg-orange-500' },
+  { key: 'comprou',          label: 'Comprou',           color: 'bg-emerald-500' },
 ] as const
 
 export function FunnelChart({ funnel, loading }: FunnelChartProps) {

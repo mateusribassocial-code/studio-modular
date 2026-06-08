@@ -379,10 +379,11 @@ function AnalyticsPage() {
 
   const funnelSteps = [
     { key: 'total' as const, label: 'Total Leads', icon: '📥', bg: 'rgba(37,99,235,0.15)' },
-    { key: 'scheduled' as const, label: 'Agendados', icon: '📅', bg: 'rgba(99,102,241,0.15)' },
-    { key: 'visited' as const, label: 'Visitaram', icon: '🏠', bg: 'rgba(139,92,246,0.15)' },
-    { key: 'negotiating' as const, label: 'Em Negociação', icon: '🤝', bg: 'rgba(168,85,247,0.15)' },
-    { key: 'closed' as const, label: 'Fechados', icon: '🏆', bg: 'rgba(16,185,129,0.15)' },
+    { key: 'tentativaContato' as const, label: 'Tent. Contato',    icon: '📞', bg: 'rgba(99,102,241,0.15)' },
+    { key: 'leadQualificada' as const,  label: 'Lead Qualificada', icon: '✅', bg: 'rgba(139,92,246,0.15)' },
+    { key: 'orcamento' as const,        label: 'Orçamento',        icon: '📋', bg: 'rgba(168,85,247,0.15)' },
+    { key: 'proposta' as const,         label: 'Proposta',         icon: '🤝', bg: 'rgba(234,88,12,0.15)' },
+    { key: 'comprou' as const,          label: 'Comprou',          icon: '🏆', bg: 'rgba(16,185,129,0.15)' },
   ]
 
   return (
@@ -560,10 +561,11 @@ function CrmPage() {
 
   const funnelSteps = [
     { key: 'total' as const, label: 'Total Leads', icon: '📥', bg: 'rgba(37,99,235,0.15)' },
-    { key: 'scheduled' as const, label: 'Agendados', icon: '📅', bg: 'rgba(99,102,241,0.15)' },
-    { key: 'visited' as const, label: 'Visitaram', icon: '🏠', bg: 'rgba(139,92,246,0.15)' },
-    { key: 'negotiating' as const, label: 'Em Negociação', icon: '🤝', bg: 'rgba(168,85,247,0.15)' },
-    { key: 'closed' as const, label: 'Fechados', icon: '🏆', bg: 'rgba(16,185,129,0.15)' },
+    { key: 'tentativaContato' as const, label: 'Tent. Contato',    icon: '📞', bg: 'rgba(99,102,241,0.15)' },
+    { key: 'leadQualificada' as const,  label: 'Lead Qualificada', icon: '✅', bg: 'rgba(139,92,246,0.15)' },
+    { key: 'orcamento' as const,        label: 'Orçamento',        icon: '📋', bg: 'rgba(168,85,247,0.15)' },
+    { key: 'proposta' as const,         label: 'Proposta',         icon: '🤝', bg: 'rgba(234,88,12,0.15)' },
+    { key: 'comprou' as const,          label: 'Comprou',          icon: '🏆', bg: 'rgba(16,185,129,0.15)' },
   ]
 
   return (

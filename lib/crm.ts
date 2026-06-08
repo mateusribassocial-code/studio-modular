@@ -1,3 +1,4 @@
+import { kv } from '@vercel/kv'
 import { CrmFunnel } from './types'
 
 const BASE = 'https://s.tintim.app/api/v1'
@@ -13,7 +14,7 @@ export const TINTIM_STATUS_IDS = {
   comprou:          112064,
 } as const
 
-export interface TintimStatus {
+export interface TintimStatusInfo {
   id: number
   name: string
 }
@@ -28,7 +29,16 @@ export interface SellerStats {
   avgResponseMinutes: number
 }
 
-function mapStatusId(id: number): keyof CrmFunnel | null {
+interface StoredLead {
+  phone: string
+  name: string
+  statusId: number
+  statusName: string
+  createdAt: string
+  updatedAt: string
+}
+
+function statusIdToFunnelKey(id: number): keyof Omit<CrmFunnel, 'total'> | null {
   switch (id) {
     case TINTIM_STATUS_IDS.tentativaContato: return 'tentativaContato'
     case TINTIM_STATUS_IDS.leadQualificada:  return 'leadQualificada'
@@ -39,35 +49,62 @@ function mapStatusId(id: number): keyof CrmFunnel | null {
   }
 }
 
-export async function fetchTintimStatuses(): Promise<TintimStatus[]> {
+export async function fetchTintimStatuses(): Promise<TintimStatusInfo[]> {
   if (!ACCOUNT_CODE || !ACCOUNT_TOKEN) return []
-  const res = await fetch(`${BASE}/${ACCOUNT_CODE}/leadstatus?token=${ACCOUNT_TOKEN}`, {
-    next: { revalidate: 3600 },
-  })
-  if (!res.ok) return []
-  return res.json()
+  try {
+    const res = await fetch(`${BASE}/${ACCOUNT_CODE}/leadstatus?token=${ACCOUNT_TOKEN}`, {
+      next: { revalidate: 3600 },
+    })
+    if (!res.ok) return []
+    return res.json()
+  } catch {
+    return []
+  }
 }
 
 export async function fetchTintimLead(phone: string) {
   if (!ACCOUNT_CODE || !ACCOUNT_TOKEN) return null
-  const res = await fetch(`${BASE}/${ACCOUNT_CODE}/lead/${phone}?token=${ACCOUNT_TOKEN}`, {
-    next: { revalidate: 300 },
-  })
-  if (!res.ok) return null
-  return res.json()
+  try {
+    const res = await fetch(`${BASE}/${ACCOUNT_CODE}/lead/${phone}?token=${ACCOUNT_TOKEN}`, {
+      next: { revalidate: 300 },
+    })
+    if (!res.ok) return null
+    return res.json()
+  } catch {
+    return null
+  }
 }
 
-// O Tintim não possui endpoint de listagem em massa de leads.
-// O funil de contagens requer integração via webhook (Tintim dispara eventos
-// a cada mudança de status). Por enquanto retorna zeros.
-export async function fetchTintimFunnel(_dateFrom: string, _dateTo: string): Promise<CrmFunnel> {
-  return {
-    total: 0,
-    tentativaContato: 0,
-    leadQualificada: 0,
-    orcamento: 0,
-    proposta: 0,
-    comprou: 0,
+export async function fetchTintimFunnel(dateFrom: string, dateTo: string): Promise<CrmFunnel> {
+  const empty: CrmFunnel = {
+    total: 0, tentativaContato: 0, leadQualificada: 0,
+    orcamento: 0, proposta: 0, comprou: 0,
+  }
+
+  try {
+    const phones = await kv.smembers<string[]>('leads:index')
+    if (!phones || phones.length === 0) return empty
+
+    const from = new Date(dateFrom).getTime()
+    const to = new Date(dateTo + 'T23:59:59').getTime()
+
+    const leads = await Promise.all(phones.map(p => kv.get<StoredLead>(`lead:${p}`)))
+
+    const funnel = { ...empty }
+
+    for (const lead of leads) {
+      if (!lead) continue
+      const createdAt = new Date(lead.createdAt).getTime()
+      if (createdAt < from || createdAt > to) continue
+
+      funnel.total++
+      const funnelKey = statusIdToFunnelKey(lead.statusId)
+      if (funnelKey) funnel[funnelKey]++
+    }
+
+    return funnel
+  } catch {
+    return empty
   }
 }
 
