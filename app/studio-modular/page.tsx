@@ -306,58 +306,129 @@ function AnalyticsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-base font-semibold text-white">CRM — Tintim</h2>
-          <p className="text-xs text-zinc-500 mt-0.5">Funil de leads</p>
+          <p className="text-xs text-zinc-500 mt-0.5">Jornada de compra</p>
         </div>
         <PeriodSelect value={crmPeriod} onChange={setCrmPeriod} />
       </div>
 
       {loadingCrm ? (
-        <div className="space-y-4"><div className="h-28 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse" /><div className="h-40 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse" /></div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-20 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse" />)}</div>
+          <div className="h-64 bg-zinc-900 border border-zinc-800 rounded-xl animate-pulse" />
+        </div>
       ) : !funnel ? (
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center text-zinc-500">CRM não configurado ou sem dados</div>
-      ) : (
-        <>
-          <Section title="Funil de Leads" icon="📊">
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
-              {funnelSteps.map((step, i) => {
-                const value = funnel[step.key]
-                const pct = funnel.total > 0 ? ((value / funnel.total) * 100).toFixed(0) : '0'
-                return (
-                  <div key={step.key} className="relative">
-                    <div className="rounded-xl p-4 text-center border border-zinc-800" style={{ background: step.bg }}>
-                      <div className="text-2xl mb-1">{step.icon}</div>
-                      <div className="text-2xl font-bold text-white">{value}</div>
-                      <div className="text-xs text-zinc-400 mt-1">{step.label}</div>
-                      {step.key !== 'total' && <div className="text-xs text-zinc-600 mt-0.5">{pct}%</div>}
-                    </div>
-                    {i < funnelSteps.length - 1 && <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 z-10 text-zinc-600 text-lg hidden md:block">›</div>}
-                  </div>
-                )
-              })}
-            </div>
-          </Section>
+      ) : (() => {
+        const taxaQualificacao = funnel.total > 0 ? (funnel.leadQualificada / funnel.total) * 100 : 0
+        const taxaFechamento   = funnel.total > 0 ? (funnel.comprou / funnel.total) * 100 : 0
+        const taxaContato      = funnel.total > 0 ? (funnel.tentativaContato / funnel.total) * 100 : 0
 
-          <Section title="Por Atendente" icon="👤">
-            {sellers.length === 0 ? <p className="text-zinc-500 text-sm text-center py-4">Sem dados de atendentes</p> : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead><tr className="border-b border-zinc-800">{['Atendente','Total','Contato','Em Negociação','Fechados','Tempo médio'].map(h => <th key={h} className={`py-2 px-3 text-zinc-500 font-normal text-xs ${h==='Atendente'?'text-left':'text-right'}`}>{h}</th>)}</tr></thead>
-                  <tbody>{sellers.map(s => (
-                    <tr key={s.id} className="border-b border-zinc-800/40 hover:bg-zinc-800/20">
-                      <td className="py-2.5 px-3 text-zinc-200">{s.name}</td>
-                      <td className="py-2.5 px-3 text-right font-bold text-white">{s.total}</td>
-                      <td className="py-2.5 px-3 text-right text-indigo-400">{s.scheduled}</td>
-                      <td className="py-2.5 px-3 text-right text-purple-400">{s.negotiating}</td>
-                      <td className="py-2.5 px-3 text-right text-emerald-400 font-semibold">{s.closed}</td>
-                      <td className="py-2.5 px-3 text-right text-zinc-400 text-xs">{s.avgResponseMinutes > 0 ? (s.avgResponseMinutes < 60 ? `${s.avgResponseMinutes}min` : `${(s.avgResponseMinutes/60).toFixed(1)}h`) : '—'}</td>
-                    </tr>
-                  ))}</tbody>
-                </table>
+        // Conversão etapa → próxima etapa
+        const stepConv = (a: number, b: number) => a > 0 ? ((b / a) * 100).toFixed(0) + '%' : '—'
+
+        // Identifica gargalo: etapa com maior queda relativa
+        const drops = [
+          { label: 'Lead → Contato',       from: funnel.total,            to: funnel.tentativaContato },
+          { label: 'Contato → Qualif.',    from: funnel.tentativaContato, to: funnel.leadQualificada },
+          { label: 'Qualif. → Orçamento',  from: funnel.leadQualificada,  to: funnel.orcamento },
+          { label: 'Orçamento → Proposta', from: funnel.orcamento,        to: funnel.proposta },
+          { label: 'Proposta → Venda',     from: funnel.proposta,         to: funnel.comprou },
+        ].filter(d => d.from > 0)
+        const bottleneck = drops.reduce((worst, d) => {
+          const loss = (d.from - d.to) / d.from
+          return loss > (worst ? (worst.from - worst.to) / worst.from : 0) ? d : worst
+        }, null as typeof drops[0] | null)
+
+        return (
+          <>
+            {/* KPIs de conversão */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                <div className="text-xs text-zinc-500 mb-1">Total de Leads</div>
+                <div className="text-2xl font-bold text-blue-400">{funnel.total}</div>
+                <div className="text-xs text-zinc-600 mt-1">entraram no funil</div>
               </div>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                <div className="text-xs text-zinc-500 mb-1">Taxa de Contato</div>
+                <div className={`text-2xl font-bold ${taxaContato >= 60 ? 'text-emerald-400' : taxaContato >= 30 ? 'text-orange-400' : 'text-red-400'}`}>{taxaContato.toFixed(0)}%</div>
+                <div className="text-xs text-zinc-600 mt-1">{funnel.tentativaContato} abordados</div>
+              </div>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                <div className="text-xs text-zinc-500 mb-1">Taxa de Qualificação</div>
+                <div className={`text-2xl font-bold ${taxaQualificacao >= 20 ? 'text-emerald-400' : taxaQualificacao >= 10 ? 'text-orange-400' : 'text-red-400'}`}>{taxaQualificacao.toFixed(0)}%</div>
+                <div className="text-xs text-zinc-600 mt-1">{funnel.leadQualificada} qualificados</div>
+              </div>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                <div className="text-xs text-zinc-500 mb-1">Taxa de Fechamento</div>
+                <div className={`text-2xl font-bold ${taxaFechamento >= 3 ? 'text-emerald-400' : taxaFechamento >= 1 ? 'text-orange-400' : 'text-zinc-400'}`}>{taxaFechamento.toFixed(1)}%</div>
+                <div className="text-xs text-zinc-600 mt-1">{funnel.comprou} vendas</div>
+              </div>
+            </div>
+
+            {/* Funil visual */}
+            <Section title="Jornada de Compra" icon="🔄">
+              <div className="space-y-2">
+                {funnelSteps.map((step, i) => {
+                  const value = funnel[step.key]
+                  const max = funnel.total || 1
+                  const barPct = (value / max) * 100
+                  const nextStep = funnelSteps[i + 1]
+                  const nextValue = nextStep ? funnel[nextStep.key] : null
+
+                  return (
+                    <div key={step.key}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-36 shrink-0 text-right">
+                          <span className="text-xs text-zinc-400">{step.label}</span>
+                        </div>
+                        <div className="flex-1 bg-zinc-800 rounded-full h-8 relative overflow-hidden">
+                          <div
+                            className="h-full rounded-full flex items-center pl-3 transition-all duration-500"
+                            style={{ width: `${Math.max(barPct, 2)}%`, background: step.bg.replace('0.15', '0.6') }}
+                          />
+                        </div>
+                        <div className="w-10 text-right text-sm font-bold text-white shrink-0">{value}</div>
+                        <div className="w-12 text-right text-xs text-zinc-500 shrink-0">
+                          {step.key !== 'total' ? `${((value / max) * 100).toFixed(0)}%` : ''}
+                        </div>
+                      </div>
+                      {nextStep && nextValue !== null && value > 0 && (
+                        <div className="flex items-center gap-3 py-0.5">
+                          <div className="w-36 shrink-0" />
+                          <div className="flex-1 flex items-center gap-1 pl-2">
+                            <span className="text-zinc-700 text-xs">↓</span>
+                            <span className="text-xs text-zinc-600">
+                              conversão {step.label} → {nextStep.label}: <span className={`font-medium ${parseInt(stepConv(value, nextValue)) >= 50 ? 'text-emerald-600' : parseInt(stepConv(value, nextValue)) >= 20 ? 'text-orange-600' : 'text-red-600'}`}>{stepConv(value, nextValue)}</span>
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </Section>
+
+            {/* Gargalo */}
+            {bottleneck && (funnel.total > 0) && (
+              <Section title="Análise do Funil" icon="💡">
+                <div className="space-y-2.5">
+                  <InsightItem
+                    type={((bottleneck.from - bottleneck.to) / bottleneck.from) > 0.7 ? 'danger' : 'warning'}
+                    text={`Maior gargalo: ${bottleneck.label} — ${((bottleneck.from - bottleneck.to) / bottleneck.from * 100).toFixed(0)}% dos leads não avançam nessa etapa (${bottleneck.from - bottleneck.to} perdidos).`}
+                  />
+                  {funnel.comprou > 0 && (
+                    <InsightItem type="success" text={`${funnel.comprou} venda${funnel.comprou > 1 ? 's' : ''} no período — conversão final de ${taxaFechamento.toFixed(1)}% do total de leads.`} />
+                  )}
+                  {funnel.total === 0 && (
+                    <InsightItem type="info" text="Nenhum lead registrado no período. Verifique se o webhook do Tintim está configurado." />
+                  )}
+                </div>
+              </Section>
             )}
-          </Section>
-        </>
-      )}
+          </>
+        )
+      })()}
       </>)}
     </div>
   )
